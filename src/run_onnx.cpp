@@ -8,25 +8,61 @@
 #include "heterocc.h"
 #include "model_def.hpp"
 
-#define data_pair(X) X.size(), (void*)X.data()
+#define data_pair(X) X.size(), X.data()
+#define edge_pair(X) (void*)&(X), sizeof(X)
 
-void dummy(void* _, size_t __) {
-  void* Section = __hetero_section_begin();
-  void* Wrapper = __hetero_task_begin(1, _, __, 1, _, __);
-
-  // Data
-  std::array<float, width * height> input_image{};
+void dummy(int* result, size_t __) {
   // Run
-  std::array<float, 10> results;
+  void* Section = __hetero_section_begin();
 
-  do_inference_at_stage(0, data_pair(input_shape), data_pair(input_image),
-                        data_pair(output_shape), data_pair(results),
-                        input_names, output_names);
-  int64_t result = std::distance(
-      results.begin(), std::max_element(results.begin(), results.end()));
-  std::cout << "Result: " << result << "\n";
+  void* T1 = __hetero_task_begin(1, result, __, 1, result, __);
+  {
+    // Data
+    std::array<float, width * height> input_image{};
+    std::array<float, 10> results;
+    // int64_t result = 0;
+    for (int i = 0; i < width * height; i++) input_image[i] = *result;
+    do_inference_at_stage(0, data_pair(input_shape), data_pair(input_image),
+                          data_pair(output_shape), data_pair(results),
+                          input_names, output_names);
+    *result = std::distance(results.begin(),
+                            std::max_element(results.begin(), results.end()));
+    std::cout << "Result T1: " << *result << "\n";
+  }
+  __hetero_task_end(T1);
 
-  __hetero_task_end(Wrapper);
+  void* T2 = __hetero_task_begin(1, result, __, 1, result, __);
+  {
+    // Data
+    std::array<float, width * height> input_image{};
+    std::array<float, 10> results;
+    // int64_t result = 0;
+    for (int i = 0; i < width * height; i++) input_image[i] = *result;
+    do_inference_at_stage(0, data_pair(input_shape), data_pair(input_image),
+                          data_pair(output_shape), data_pair(results),
+                          input_names, output_names);
+    *result = std::distance(results.begin(),
+                            std::max_element(results.begin(), results.end()));
+    std::cout << "Result T2: " << *result << "\n";
+  }
+  __hetero_task_end(T2);
+
+  void* T3 = __hetero_task_begin(1, result, __, 1, result, __);
+  {
+    // Data
+    std::array<float, width * height> input_image{};
+    std::array<float, 10> results;
+    // int64_t result = 0;
+    for (int i = 0; i < width * height; i++) input_image[i] = *result;
+    do_inference_at_stage(0, data_pair(input_shape), data_pair(input_image),
+                          data_pair(output_shape), data_pair(results),
+                          input_names, output_names);
+    *result = std::distance(results.begin(),
+                            std::max_element(results.begin(), results.end()));
+    std::cout << "Result T3: " << *result << "\n";
+  }
+  __hetero_task_end(T3);
+
   __hetero_section_end(Section);
 }
 
@@ -41,7 +77,9 @@ int main(int argc, char** argv) {
     init_model(model_file_name, i);  // use the same model for all stages
 
   // make hpvm compiler happy
-  void* DFG = __hetero_launch((void*)dummy, 1, nullptr, 0, 1, nullptr, 0);
+  int result = 0;  // used for dependency
+  void* DFG = __hetero_launch((void*)dummy, 1, &result, sizeof(result), 1,
+                              &result, sizeof(result));
   __hetero_wait(DFG);
   std::cout << "Done! "
             << "\n";

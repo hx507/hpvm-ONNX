@@ -3,14 +3,16 @@
 #include <array>
 #include <vector>
 
+/**
 #define TCB_SPAN_NO_EXCEPTIONS  // need an exception less implementation of
                                 // std::span
 #include "span.hpp"
 namespace std {
 using tcb::span;
 };
+**/
 
-constexpr int kNumStage = 2;
+constexpr int kNumStage = 3;
 
 constexpr const int width = 28;
 constexpr const int height = 28;
@@ -24,8 +26,9 @@ void init_model(char* model_file_name, int stage);
 // std::array<float, 10> do_inference(
 // std::array<float, width * height>& input_image);
 //
-void do_inference_at_stage(int stage, size_t inp_shape_sz, void* inp_shape,
-                           size_t inp_sz, void* inp, size_t out_shape_sz,
-                           void* out_shape, size_t out_sz, void* out,
-                           const char** input_names,
+
+void do_inference_at_stage(int stage, size_t inp_shape_sz,
+                           const int64_t* inp_shape, size_t inp_sz, float* inp,
+                           size_t out_shape_sz, const int64_t* out_shape,
+                           size_t out_sz, float* out, const char** input_names,
                            const char** output_names);
