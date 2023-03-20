@@ -21,11 +21,7 @@ const char* output_names[] = {"Plus214_Output_0"};
 constexpr std::array<int64_t, 4> input_shape{1, 1, width, height};
 constexpr std::array<int64_t, 2> output_shape{1, 10};
 
-// void init_model(char* model_file_name);
 void init_model(char* model_file_name, int stage);
-// std::array<float, 10> do_inference(
-// std::array<float, width * height>& input_image);
-//
 
 void do_inference_at_stage(int stage, size_t inp_shape_sz,
                            const int64_t* inp_shape, size_t inp_sz, float* inp,
