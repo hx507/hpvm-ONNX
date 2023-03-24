@@ -6,10 +6,8 @@
 #include <vector>
 
 #include "heterocc.h"
-#include "model_def.hpp"
-
-#define data_pair(X) (X).size(), (X).data()
-#define edge_pair(X) (void*)&(X), sizeof(X)
+#include "model.hpp"
+#include "stage_def.hpp"
 
 using std::array;
 using std::cout;
@@ -22,55 +20,25 @@ void dummy(int* result, size_t __, array<float, width * height>* input_image,
   void* Section = __hetero_section_begin();
 
   // -----------------------------------------
-  void* T1 =
-      __hetero_task_begin(1, input_image, ___, 1, result, __);
+  void* T1 = __hetero_task_begin(1, input_image, ___, 1, result, __);
   {
     array<float, 10> local_res;
-    do_inference_at_stage(0, data_pair(input_shape),  // clang-format off
-                             data_pair(*input_image),
-                             data_pair(output_shape), 
-                             data_pair(local_res),
-                             input_names, output_names);  // clang-format on
+    do_inference_at_stage(0, data_pair(*input_image), data_pair(local_res));
     *result = distance(local_res.begin(),
                        max_element(local_res.begin(), local_res.end()));
     cout << "Result T1: " << *result << "\n";
   }
   __hetero_task_end(T1);
 
-  // -----------------------------------------
-  void* T2 =
-      __hetero_task_begin(2, result, __, input_image, ___, 1, result, __);
-  {
-    array<float, 10> local_res;
-    do_inference_at_stage(1, data_pair(input_shape),  // clang-format off
-                             data_pair(*input_image),
-                             data_pair(output_shape), 
-                             data_pair(local_res),
-                             input_names, output_names);  // clang-format on
-    *result = distance(local_res.begin(),
-                       max_element(local_res.begin(), local_res.end()));
-    cout << "Result T2: " << *result << "\n";
-  }
-  __hetero_task_end(T2);
-
-  // -----------------------------------------
-  void* T3 =
-      __hetero_task_begin(2, result, __, input_image, ___, 1, result, __);
-  {
-    array<float, 10> local_res;
-    do_inference_at_stage(2, data_pair(input_shape),  // clang-format off
-                             data_pair(*input_image),
-                             data_pair(output_shape), 
-                             data_pair(local_res),
-                             input_names, output_names);  // clang-format on
-    // TODO inspect_result_at_stage(stage, input, result);
-    *result = distance(local_res.begin(),
-                       max_element(local_res.begin(), local_res.end()));
-    cout << "Result T3: " << *result << "\n";
-  }
-  __hetero_task_end(T3);
-
   __hetero_section_end(Section);
+}
+
+void debug_mnist(int s, float* out) {
+  array<float, 10> local_res;
+  for (int i = 0; i < local_res.size(); i++) local_res[i] = out[i];
+  int result = distance(local_res.begin(),
+                        max_element(local_res.begin(), local_res.end()));
+  cout << "Result at stage " << s << ": " << result << "\n";
 }
 
 int main(int argc, char** argv) {
@@ -79,12 +47,16 @@ int main(int argc, char** argv) {
     std::cout << "Usage:: ./run [model file].onnx";
     return 1;
   }
-  char* model_file_name = argv[1];
-  // TODO have an easy&organized way to list shapes/files/names/result_inspection_function
-  // (header files)
-  for (int i = 0; i < kNumStage; i++) // TODO: also specify io shape/names
-    init_model(model_file_name,
-               i);  // use the same model for all stages for now
+
+  init_all_stages();
+  auto dbg = [&](int s, float* out) {
+    array<float, 10> local_res;
+    for (int i = 0; i < local_res.size(); i++) local_res[i] = out[i];
+    int result = distance(local_res.begin(),
+                          max_element(local_res.begin(), local_res.end()));
+    cout << "Result at stage " << s << ": " << result << "\n";
+  };
+  for (int i = 0; i < kNumStage; i++) stages[i].dbg_callback = dbg;
 
   // Global data & buffers
   int result = 0;  // shared output used to specify dependency
