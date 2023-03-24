@@ -23,7 +23,7 @@ void dummy(int* result, size_t __, array<float, width * height>* input_image,
 
   // -----------------------------------------
   void* T1 =
-      __hetero_task_begin(2, result, __, input_image, ___, 1, result, __);
+      __hetero_task_begin(1, input_image, ___, 1, result, __);
   {
     array<float, 10> local_res;
     do_inference_at_stage(0, data_pair(input_shape),  // clang-format off
@@ -63,6 +63,7 @@ void dummy(int* result, size_t __, array<float, width * height>* input_image,
                              data_pair(output_shape), 
                              data_pair(local_res),
                              input_names, output_names);  // clang-format on
+    // TODO inspect_result_at_stage(stage, input, result);
     *result = distance(local_res.begin(),
                        max_element(local_res.begin(), local_res.end()));
     cout << "Result T3: " << *result << "\n";
@@ -75,11 +76,13 @@ void dummy(int* result, size_t __, array<float, width * height>* input_image,
 int main(int argc, char** argv) {
   // Init
   if (argc < 2) {
-    std::cout << "Usage:: ./run [model file]";
+    std::cout << "Usage:: ./run [model file].onnx";
     return 1;
   }
   char* model_file_name = argv[1];
-  for (int i = 0; i < kNumStage; i++)
+  // TODO have an easy&organized way to list shapes/files/names/result_inspection_function
+  // (header files)
+  for (int i = 0; i < kNumStage; i++) // TODO: also specify io shape/names
     init_model(model_file_name,
                i);  // use the same model for all stages for now
 

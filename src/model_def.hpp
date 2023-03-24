@@ -12,10 +12,45 @@ using tcb::span;
 };
 **/
 
-constexpr int kNumStage = 3;
-
+// TODO: testing parameters for mnist, remove me
 constexpr const int width = 28;
 constexpr const int height = 28;
+
+struct OnnxStage {
+  const char* model_file_name;
+  std::vector<const char*> input_names, output_names;
+  std::vector<int64_t> input_shape, output_shape;
+};
+
+const std::vector<OnnxStage> stages = {
+    // Stage 1
+    {.model_file_name = "../data/mnist.onnx",
+     .input_names = {"Input3"},
+     .output_names = {"Plus214_Output_0"},
+     .input_shape = {1, 1, width, height},
+     .output_shape = {1, 10}},
+
+    // Stage 2
+    {.model_file_name = "../data/mnist.onnx",
+     .input_names = {"Input3"},
+     .output_names = {"Plus214_Output_0"},
+     .input_shape = {1, 1, width, height},
+     .output_shape = {1, 10}},
+
+    // Stage 3
+    {.model_file_name = "../data/mnist.onnx",
+     .input_names = {"Input3"},
+     .output_names = {"Plus214_Output_0"},
+     .input_shape = {1, 1, width, height},
+     .output_shape = {1, 10}},
+};
+
+const int kNumStage = stages.size();
+
+void init_all_stages();
+
+// old------------------------
+
 const char* input_names[] = {"Input3"};
 const char* output_names[] = {"Plus214_Output_0"};
 constexpr std::array<int64_t, 4> input_shape{1, 1, width, height};

@@ -30,9 +30,9 @@ function(hetero_compile_obj source_files hetero_obj)
 
         #COMMAND clang++-9 -emit-llvm -c ${src} ${PROJECT_INCLUDES} -o ${src_name}.hetero.ll # Regular compiler for debug purpose
 
-        COMMAND ${HPVM_BUILD}/bin/clang++ -O1 ${HPVM_INCLUDE} ${PROJECT_INCLUDES} -std=c++17 -DDEVICE=CPU_TARGET -emit-llvm -fno-exceptions -Xclang -disable-lifetime-markers -E ${src} -o ${src_name}.deepcopy.cc 
-        COMMAND ${HPVM_BUILD}/bin/hetero-dc ${src_name}.deepcopy.cc -- -std=c++17 # deep copy can be disabled for now, nothing use it
-        COMMAND ${HPVM_BUILD}/bin/clang++ -O1 ${HPVM_INCLUDE} ${PROJECT_INCLUDES} -std=c++17 -DDEVICE=CPU_TARGET -emit-llvm -fno-exceptions -Xclang -disable-lifetime-markers -S ${src_name}.deepcopy.cc -o ${src_name}.hetero.ll
+        COMMAND ${HPVM_BUILD}/bin/clang++ -O1 ${HPVM_INCLUDE} ${PROJECT_INCLUDES} -std=c++20 -DDEVICE=CPU_TARGET -emit-llvm -fno-exceptions -Xclang -disable-lifetime-markers -E ${src} -o ${src_name}.deepcopy.cc 
+        COMMAND ${HPVM_BUILD}/bin/hetero-dc ${src_name}.deepcopy.cc -- -std=c++20 # deep copy can be disabled for now, nothing use it
+        COMMAND ${HPVM_BUILD}/bin/clang++ -O1 ${HPVM_INCLUDE} ${PROJECT_INCLUDES} -std=c++20 -DDEVICE=CPU_TARGET -emit-llvm -fno-exceptions -Xclang -disable-lifetime-markers -S ${src_name}.deepcopy.cc -o ${src_name}.hetero.ll
         DEPENDS ${src}
         )
       list(APPEND hetero_ll_files ${src_name}.hetero.ll)
