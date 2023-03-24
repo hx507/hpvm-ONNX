@@ -23,7 +23,7 @@ void debug_mnist(int s, float* out) {
 }
 
 // clang-format off
-void pipeline_kernel(array<float, 10> *result, size_t result_size
+void pipeline_kernel(array<float, 10> *result, size_t result_size,
         array<float, width * height>* input_image_1,size_t input_image_size_1,
         array<float, width * height>* input_image_2,size_t input_image_size_2,
         array<float, width * height>* input_image_3,size_t input_image_size_3) {  // clang-format on
