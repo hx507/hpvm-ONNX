@@ -4,6 +4,7 @@
 #include <array>
 #include <functional>
 #include <vector>
+#include <map>
 
 #define HPVM_STAGE_DEBUG
 
@@ -33,13 +34,13 @@ struct OnnxStage {
   const char* model_file_name;
   std::vector<char*> input_names, output_names;
   std::vector<int64_t> input_shape, output_shape;
-  std::function<void(int stage, float* out)> dbg_callback{};
+  std::function<void(const std::string& stage, float* out)> dbg_callback{};
   // possibly add per-stage session parameter tuning here
 };
 
-extern std::vector<OnnxStage> stages;
+extern std::map<std::string, OnnxStage> stages;
 const extern int kNumStage;
 
 void init_all_stages();
-void do_inference_at_stage(int stage, size_t inp_sz, float* inp, size_t out_sz,
+void do_inference_at_stage(const std::string& stage, size_t inp_sz, float* inp, size_t out_sz,
                            float* out);

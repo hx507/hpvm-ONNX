@@ -26,16 +26,16 @@ auto memory_info =
     Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
 Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, "ONNX runner");
 Ort::SessionOptions session_option;
-std::vector<Ort::Session*> sessions;
+std::map<std::string, Ort::Session*> sessions;
 
 void init_all_stages() {
   assert(sessions.empty() && "Only initializing stages one single time");
-  for (const auto& stage : stages) {
+  for (const auto& [stage_name, stage] : stages) {
     session_option.SetIntraOpNumThreads(1);
     session_option.SetGraphOptimizationLevel(
         GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
-    sessions.push_back(
-        new Ort::Session(env, stage.model_file_name, session_option));
+    sessions[stage_name] =
+        new Ort::Session(env, stage.model_file_name, session_option);
   }
 }
 
@@ -55,10 +55,9 @@ void do_inference_with_session(Ort::Session* sess, size_t inp_shape_sz,
             &output_tensor, 1);
 }
 
-void do_inference_at_stage(int s, size_t inp_sz, float* inp, size_t out_sz,
-                           float* out) {
-  assert(s >= 0 && s < kNumStage &&
-         "Trying to inference at an undefined stage");
+void do_inference_at_stage(const std::string& s, size_t inp_sz, float* inp,
+                           size_t out_sz, float* out) {
+  assert(stages.count(s) && "Trying to inference at an undefined stage");
 
   const auto& stage = stages[s];
   do_inference_with_session(sessions[s], data_pair(stage.input_shape), inp_sz,

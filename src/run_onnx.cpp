@@ -14,7 +14,7 @@ using std::cout;
 using std::distance;
 using std::max_element;
 
-void debug_mnist(int s, float* out) {
+void debug_mnist(const std::string& s, float* out) {
   array<float, 10> local_res;
   for (int i = 0; i < local_res.size(); i++) local_res[i] = out[i];
   int result = distance(local_res.begin(),
@@ -33,19 +33,22 @@ void pipeline_kernel(array<float, 10> *result, size_t result_size,
   {  // -----------------------------------------
     void* T = __hetero_task_begin(1, input_image_1, input_image_size_1, 1,
                                   result, result_size);
-    do_inference_at_stage(0, data_pair(*input_image_1), data_pair(*result));
+    do_inference_at_stage("Stage 1", data_pair(*input_image_1),
+                          data_pair(*result));
     __hetero_task_end(T);
   }
   {  // -----------------------------------------
     void* T = __hetero_task_begin(2, result, result_size, input_image_2,
                                   input_image_size_2, 1, result, result_size);
-    do_inference_at_stage(1, data_pair(*input_image_2), data_pair(*result));
+    do_inference_at_stage("Stage 2", data_pair(*input_image_2),
+                          data_pair(*result));
     __hetero_task_end(T);
   }
   {  // -----------------------------------------
     void* T = __hetero_task_begin(2, result, result_size, input_image_3,
                                   input_image_size_3, 1, result, result_size);
-    do_inference_at_stage(2, data_pair(*input_image_3), data_pair(*result));
+    do_inference_at_stage("Stage 3", data_pair(*input_image_3),
+                          data_pair(*result));
     __hetero_task_end(T);
   }
 
@@ -60,7 +63,8 @@ int main(int argc, char** argv) {
   }
 
   init_all_stages();
-  for (int i = 0; i < kNumStage; i++) stages[i].dbg_callback = debug_mnist;
+  for (const auto& [stage_name, stage] : stages)
+    stages[stage_name].dbg_callback = debug_mnist;
 
   // Global data & buffers
   array<float, 10> result;  // shared output used to specify dependency
